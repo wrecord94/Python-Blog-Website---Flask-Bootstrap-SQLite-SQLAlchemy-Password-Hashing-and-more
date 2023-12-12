@@ -57,8 +57,6 @@ with app.app_context():
     db.create_all()
 
 
-# TODO: Write my own decorator to only allow admin access to routing
-
 # Create a user-loader callback
 @login_manager.user_loader
 def load_user(user_id):
@@ -66,6 +64,7 @@ def load_user(user_id):
 
 
 def admin_required(func):
+    """Function to manage the admin access to the restricted areas of the website."""
     @wraps(func)
     def decorated_function(*args, **kwargs):
         # If id is not 1 then return abort with 403 error
@@ -77,7 +76,6 @@ def admin_required(func):
     return decorated_function
 
 
-# TODO: Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["GET", "POST"])
 def register():
     # If already logged in redirect to home
