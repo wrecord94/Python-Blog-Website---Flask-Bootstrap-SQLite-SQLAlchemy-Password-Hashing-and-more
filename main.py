@@ -177,15 +177,23 @@ def show_post(post_id):
     comment_form = CommentForm()
     # If form is complete we want to action the adding of a comment.
     if comment_form.validate_on_submit():
-        # Instantiate a comment object from its class
-        new_comment = Comment(
-            comment_text=comment_form.comment_text.data,
-            author=current_user,
-            blogpost=requested_post
-        )
-        db.session.add(new_comment)
-        db.session.commit()
-        return redirect(url_for("show_post", post_id=requested_post.id))
+        # Check user is logged in otherwise can't post comment and redirect to login page.
+        if current_user.is_authenticated:
+            # If form is submitted AND user is logged in then we can comment
+            # Instantiate a comment object from its class
+            new_comment = Comment(
+                comment_text=comment_form.comment_text.data,
+                author=current_user,
+                blogpost=requested_post
+            )
+            # Add this new comment to our db and commit changes
+            db.session.add(new_comment)
+            db.session.commit()
+            # Redirect user to the post with the new comment appearing
+            return redirect(url_for("show_post", post_id=requested_post.id))
+        else:
+            flash("... Please login to post a comment.", category='warning')
+            return redirect(url_for('login'))
 
     return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
 
