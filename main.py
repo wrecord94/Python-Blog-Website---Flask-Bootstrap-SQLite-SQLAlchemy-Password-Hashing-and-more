@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 # from sqlalchemy.orm import relationship
 # Import your forms from the forms.py
-from forms import CreatePostForm, RegisterForm, LoginForm
+from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 
 app = Flask(__name__)
 load_dotenv()
@@ -40,6 +40,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(250), unique=True, nullable=False)
     password = db.Column(db.String(250), nullable=False)
     # RELATIONAL DB WORK
+    # User is parent class with 1:many relationship
     posts: Mapped[list["BlogPost"]] = relationship(back_populates="author")
 
 
@@ -155,7 +156,9 @@ def get_all_posts():
 @app.route("/post/<int:post_id>")
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
-    return render_template("post.html", post=requested_post)
+    # Add the CommentForm to the route
+    comment_form = CommentForm()
+    return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
 
 
 @app.route("/new-post", methods=["GET", "POST"])

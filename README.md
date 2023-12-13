@@ -23,3 +23,6 @@ Using Flask, Boostrap, SQLAlchemy, WTForm and more
 * Only admin can edit, delete or create a new post.
 * Hid buttons for others.
 * Wrote a custom decorator function for this 'admin_required'.
+
+##### Requirement 4 - Relational DB Schema
+* Create a 1:many relationship between the User Table and the BlogPost table, where One User can create many BlogPost objects
