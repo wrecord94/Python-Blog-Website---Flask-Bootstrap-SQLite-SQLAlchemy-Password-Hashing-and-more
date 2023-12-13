@@ -47,16 +47,19 @@
         {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
 
           <!-- TODO: Show all the comments on a post -->
+          <!-- Show all comments -->
           <ul class="commentList">
+            {% for comment in post.comments: %}
             <li>
               <div class="commenterImage">
                 <img src="../static/assets/img/default-profile.jpg" />
               </div>
               <div class="commentText">
-                <p>Some comment</p>
-                <span class="date sub-text">comment author name</span>
+                <p>{{ comment.comment_text|safe }}</p>
+                <span class="date sub-text">{{ comment.author.name }}</span>
               </div>
             </li>
+            {% endfor %}
           </ul>
         </div>
       </div>

@@ -40,8 +40,10 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(250), unique=True, nullable=False)
     password = db.Column(db.String(250), nullable=False)
     # RELATIONAL DB WORK
-    # User is parent class with 1:many relationship
+    # 1. One author to many blog-posts
     posts: Mapped[list["BlogPost"]] = relationship(back_populates="author")
+    # 2. One user to many Comment objects
+    comments: Mapped[list["Comment"]] = relationship(back_populates="author")
 
 
 class BlogPost(db.Model):
@@ -53,9 +55,24 @@ class BlogPost(db.Model):
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
     # RELATIONAL DB WORK
+    # 1. One author to many blog-posts
     author_id: Mapped[int] = db.Column(db.ForeignKey("user.id"))
     author: Mapped["User"] = relationship(back_populates="posts")
+    # 3. One blog_post to many comments
+    comments: Mapped[list["Comment"]] = relationship(back_populates="blogpost")
 
+
+class Comment(db.Model):
+    __tablename__ = "comments"
+    id = db.Column(db.Integer, primary_key=True)
+    comment_text = db.Column(db.String(250), nullable=False)
+    # RELATIONAL DB WORK
+    # 2. One user to many Comment objects
+    author_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey('user.id'))
+    author: Mapped["User"] = relationship(back_populates="comments")
+    # 3. One blog_post to many comments
+    blogpost_id = db.Column(db.ForeignKey('blog_posts.id'))
+    blogpost = db.relationship("BlogPost", back_populates="comments")
 
 
 with app.app_context():
@@ -153,11 +170,23 @@ def get_all_posts():
     return render_template("index.html", all_posts=posts)
 
 
-@app.route("/post/<int:post_id>")
+@app.route("/post/<int:post_id>", methods=["GET", "POST"])
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
     # Add the CommentForm to the route
     comment_form = CommentForm()
+    # If form is complete we want to action the adding of a comment.
+    if comment_form.validate_on_submit():
+        # Instantiate a comment object from its class
+        new_comment = Comment(
+            comment_text=comment_form.comment_text.data,
+            author=current_user,
+            blogpost=requested_post
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return redirect(url_for("show_post", post_id=requested_post.id))
+
     return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
 
 
