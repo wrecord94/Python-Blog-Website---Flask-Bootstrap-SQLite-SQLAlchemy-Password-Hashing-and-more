@@ -9,6 +9,7 @@ from flask_ckeditor import CKEditor
 # from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import Mapped, relationship
 # from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 # from sqlalchemy.orm import relationship
@@ -25,7 +26,6 @@ Bootstrap5(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DB_LOCATION']
 db = SQLAlchemy()
@@ -33,6 +33,16 @@ db.init_app(app)
 
 
 # CONFIGURE TABLES
+class User(UserMixin, db.Model):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    # RELATIONAL DB WORK
+    posts: Mapped[list["BlogPost"]] = relationship(back_populates="author")
+
+
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
@@ -40,17 +50,11 @@ class BlogPost(db.Model):
     subtitle = db.Column(db.String(250), nullable=False)
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
-    author = db.Column(db.String(250), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
+    # RELATIONAL DB WORK
+    author_id: Mapped[int] = db.Column(db.ForeignKey("user.id"))
+    author: Mapped["User"] = relationship(back_populates="posts")
 
-
-# TODO: Create a User table for all your registered users.
-class User(UserMixin, db.Model):
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
-    email = db.Column(db.String(250), unique=True, nullable=False)
-    password = db.Column(db.String(250), nullable=False)
 
 
 with app.app_context():
@@ -65,6 +69,7 @@ def load_user(user_id):
 
 def admin_required(func):
     """Function to manage the admin access to the restricted areas of the website."""
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         # If id is not 1 then return abort with 403 error
@@ -109,7 +114,6 @@ def register():
     return render_template("register.html", form=form)
 
 
-# TODO: Retrieve a user from the database based on their email.
 @app.route('/login', methods=["GET", "POST"])
 def login():
     # If already logged in redirect to home
@@ -148,14 +152,11 @@ def get_all_posts():
     return render_template("index.html", all_posts=posts)
 
 
-# TODO: Allow logged-in users to comment on posts
 @app.route("/post/<int:post_id>")
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
     return render_template("post.html", post=requested_post)
 
-
-# TODO: Use a decorator so only an admin user can create a new post
 
 @app.route("/new-post", methods=["GET", "POST"])
 @admin_required
@@ -167,7 +168,7 @@ def add_new_post():
             subtitle=form.subtitle.data,
             body=form.body.data,
             img_url=form.img_url.data,
-            author=current_user.id,
+            author_id=current_user.id,
             date=date.today().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
@@ -185,7 +186,7 @@ def edit_post(post_id):
         title=post.title,
         subtitle=post.subtitle,
         img_url=post.img_url,
-        author=post.author,
+        author_id=post.author_id,
         body=post.body
     )
     if edit_form.validate_on_submit():
