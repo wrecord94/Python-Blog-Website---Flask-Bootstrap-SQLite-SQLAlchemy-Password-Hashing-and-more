@@ -3,17 +3,15 @@ import os
 from datetime import date
 from functools import wraps
 
-from flask import Flask, abort, render_template, redirect, url_for, flash, request
+from flask import Flask, abort, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 # from flask_gravatar import Gravatar
+
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, relationship
-# from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-# from sqlalchemy.orm import relationship
-# Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 
 app = Flask(__name__)
@@ -21,6 +19,8 @@ load_dotenv()
 app.config['SECRET_KEY'] = os.environ['SUPER_SECRET_KEY']
 ckeditor = CKEditor(app)
 Bootstrap5(app)
+# # For adding profile images to the comment section
+# gravatar = Gravatar(app, default='retro')
 
 # TODO: Configure Flask-Login
 login_manager = LoginManager()

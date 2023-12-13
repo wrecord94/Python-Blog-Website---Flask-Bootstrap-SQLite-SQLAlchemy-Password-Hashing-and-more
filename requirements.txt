@@ -3,7 +3,7 @@ Flask
 Flask_CKEditor
 Flask_Login
 Flask-Gravatar
-flask_sqlalchemy
+Flask-SQLAlchemy
 Flask_WTF
 Werkzeug
 WTForms
